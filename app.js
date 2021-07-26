@@ -1,4 +1,7 @@
-import { getChartData } from '/data.js';
+import {
+    getChartData
+} from '/data.js';
+
 const PADDING = 40;
 const WIDTH = 600;
 const HEIGHT = 200;
@@ -20,7 +23,29 @@ function chart(canvas, data) {
     const yRatio = VIEW_HEIGHT / (yMax - yMin);
     const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
 
-    // === y axis
+    const yData = data.columns.filter(col => data.types[col[0]] === 'line');
+    const xData = data.columns.filter(col => data.types[col[0]] !== 'line')[0];
+
+
+    yAxis(ctx, yMin, yMax);
+    xAxis(ctx, xData, xRatio);
+
+    yData.map(toCoords(xRatio, yRatio)).forEach((coords, idx) => {
+        const color = data.colors[yData[idx][0]];
+        line(ctx, coords, {
+            color
+        })
+    })
+}
+
+function toCoords(xRatio, yRatio) {
+    return (col) => col.map((y, i) => [
+        Math.floor((i - 1) * xRatio),
+        Math.floor(DPI_HEIGHT - PADDING - y * yRatio)
+    ]).filter((_, i) => i !== 0);
+}
+
+function yAxis(ctx, yMin, yMax) {
     const step = VIEW_HEIGHT / ROWS_COUNT;
     const textStep = (yMax - yMin) / ROWS_COUNT;
     ctx.beginPath();
@@ -39,24 +64,24 @@ function chart(canvas, data) {
 
     ctx.stroke();
     ctx.closePath();
-    //
-
-    data.columns.forEach(col => {
-        const name = col[0];
-        if (data.types[name] === 'line') {
-            const coords = col.map((y, i) => [
-                Math.floor((i - 1) * xRatio),
-                Math.floor(DPI_HEIGHT - PADDING - y * yRatio)
-            ]).filter((_, i) => i !== 0);
-
-            const color = data.colors[name];
-            line(ctx, coords, { color });
-
-        }
-    });
 }
 
-function line(ctx, coords, { color }) {
+function xAxis(ctx, data, xRatio) {
+    const colsCount = 6;
+    const step = Math.round(data.length / colsCount);
+
+    ctx.beginPath();
+    for (let index = 1; index < data.length; index += step) {
+        const text = toDate(data[index]);
+        const x = index * xRatio
+        ctx.fillText(text.toString(), x, DPI_HEIGHT - 10);
+    }
+    ctx.closePath();
+}
+
+function line(ctx, coords, {
+    color
+}) {
     ctx.beginPath();
     ctx.lineWidth = 4;
     ctx.strokeStyle = color;
@@ -69,7 +94,10 @@ function line(ctx, coords, { color }) {
 
 chart(document.getElementById('chart'), getChartData())
 
-function computeBounderies({ columns, types }) {
+function computeBounderies({
+    columns,
+    types
+}) {
     let min;
     let max;
 
@@ -91,4 +119,23 @@ function computeBounderies({ columns, types }) {
     })
 
     return [min, max];
+}
+
+export function toDate(timestamp) {
+    const shortMonths = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+    ]
+    const date = new Date(timestamp)
+    return `${shortMonths[date.getMonth()]} ${date.getDate()}`
 }
