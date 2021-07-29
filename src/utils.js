@@ -73,3 +73,7 @@ export function bounderies({
 
     return [min, max];
 }
+
+export function css(el, styles = {}) {
+    Object.assign(el.style, styles);
+}

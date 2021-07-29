@@ -1,9 +1,13 @@
 import {
+    tooltip
+} from './tooltip';
+import {
     isOver,
     toDate,
     line,
     circle,
-    bounderies
+    bounderies,
+    css
 } from './utils';
 
 const PADDING = 40;
@@ -15,11 +19,17 @@ const VIEW_HEIGHT = DPI_HEIGHT - PADDING * 2;
 const VIEW_WIDTH = DPI_WIDTH;
 const ROWS_COUNT = 5;
 
-export function chart(canvas, data) {
+export function chart(root, data) {
+    const canvas = root.querySelector('canvas')
     const ctx = canvas.getContext('2d');
+    const tip = tooltip(root.querySelector('[data-el="tooltip"]'))
     let raf;
-    canvas.style.width = WIDTH + 'px';
-    canvas.style.height = HEIGHT + 'px';
+
+    css(canvas, {
+        width: WIDTH + 'px',
+        height: HEIGHT + 'px'
+    });
+
     canvas.width = DPI_WIDTH;
     canvas.height = DPI_HEIGHT;
 
@@ -43,11 +53,16 @@ export function chart(canvas, data) {
         } = canvas.getBoundingClientRect();
         proxy.mouse = {
             x: (clientX - left) * 2,
+            tooltip: {
+                left: clientX - left,
+                top: clientY - top
+            }
         }
     }
 
     function mouseleave() {
         proxy.mouse = null;
+        tip.hide()
     }
 
     function paint() {
@@ -59,7 +74,7 @@ export function chart(canvas, data) {
         const xData = data.columns.filter(col => data.types[col[0]] !== 'line')[0];
 
         yAxis(yMin, yMax);
-        xAxis(xData, xRatio);
+        xAxis(xData, xRatio, yData);
 
         yData.map(toCoords(xRatio, yRatio)).forEach((coords, idx) => {
             const color = data.colors[yData[idx][0]];
@@ -76,7 +91,7 @@ export function chart(canvas, data) {
         });
     }
 
-    function xAxis(xData, xRatio) {
+    function xAxis(xData, xRatio, yData) {
         const colsCount = 6;
         const step = Math.round(xData.length / colsCount);
 
@@ -96,6 +111,15 @@ export function chart(canvas, data) {
                 ctx.lineTo(x, DPI_HEIGHT - PADDING)
 
                 ctx.restore();
+
+                tip.show(proxy.mouse.tooltip, {
+                    title: toDate(xData[index]),
+                    items: yData.map(col => ({
+                        color: data.colors[col[0]],
+                        name: data.names[col[0]],
+                        value: col[index + 1]
+                    }))
+                })
             }
         }
         ctx.stroke();
