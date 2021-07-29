@@ -1,0 +1,25 @@
+{
+  "name": "Canvas-charts",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000c\u0000a\u0000n\u0000v\u0000a\u0000s\u0000-\u0000c\u0000h\u0000a\u0000r\u0000t\u0000s\u0000\r\u0000 \u0000C\u0000a\u0000n\u0000v\u0000a\u0000s\u0000 \u0000c\u0000h\u0000a\u0000r\u0000t\u0000s\u0000 \u0000f\u0000o\u0000r\u0000 \u0000t\u0000e\u0000l\u0000e\u0000g\u0000r\u0000a\u0000m\u0000 \u0000c\u0000o\u0000n\u0000t\u0000e\u0000s\u0000t\u0000",
+  "main": "data.js",
+  "scripts": {
+    "dev": "parcel ./src/index.html -p 5500",
+    "build": "parcel build ./src/index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tataqt/canvas-charts.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tataqt/canvas-charts/issues"
+  },
+  "homepage": "https://github.com/tataqt/canvas-charts#readme",
+  "devDependencies": {
+    "parcel-bundler": "^1.12.5",
+    "sass": "^1.36.0"
+  }
+}
