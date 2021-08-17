@@ -11,7 +11,9 @@ import {
     circle,
     bounderies,
     css,
-    toCoords
+    toCoords,
+    computeYRatio,
+    computeXRatio
 } from './utils';
 
 const PADDING = 40;
@@ -46,6 +48,10 @@ export function chart(root, data) {
         }
     })
 
+    slider.subscribe((pos) => {
+        proxy.pos = pos;
+    })
+
     canvas.addEventListener('mousemove', mousemove);
     canvas.addEventListener('mouseleave', mouseleave);
 
@@ -71,17 +77,30 @@ export function chart(root, data) {
     }
 
     function paint() {
-        clear()
-        const [yMin, yMax] = bounderies(data);
-        const yRatio = VIEW_HEIGHT / (yMax - yMin);
-        const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
-        const yData = data.columns.filter(col => data.types[col[0]] === 'line');
-        const xData = data.columns.filter(col => data.types[col[0]] !== 'line')[0];
+        clear();
+        const length = data.columns[0].length;
+        const leftIndex = Math.round(length * proxy.pos[0] / 100);
+        const rightIndex = Math.round(length * proxy.pos[1] / 100);
+
+        const columns = data.columns.map(col => {
+            const res = col.slice(leftIndex, rightIndex);
+            if (typeof res[0] !=='string') {
+                res.unshift(col[0]);
+            }
+
+            return res;
+        });
+
+        const [yMin, yMax] = bounderies({columns,types: data.types});
+        const yRatio = computeYRatio(VIEW_HEIGHT, yMax, yMin);
+        const xRatio = computeXRatio(VIEW_WIDTH, columns[0].length);
+        const yData = columns.filter(col => data.types[col[0]] === 'line');
+        const xData = columns.filter(col => data.types[col[0]] !== 'line')[0];
 
         yAxis(yMin, yMax);
         xAxis(xData, xRatio, yData);
 
-        yData.map(toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING)).forEach((coords, idx) => {
+        yData.map(toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING, yMin)).forEach((coords, idx) => {
             const color = data.colors[yData[idx][0]];
             line(ctx, coords, {
                 color
