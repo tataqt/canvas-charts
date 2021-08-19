@@ -24,6 +24,7 @@ const DPI_HEIGHT = HEIGHT * 2;
 const VIEW_HEIGHT = DPI_HEIGHT - PADDING * 2;
 const VIEW_WIDTH = DPI_WIDTH;
 const ROWS_COUNT = 5;
+const SPEED = 3000;
 
 export function chart(root, data) {
     const canvas = root.querySelector('[data-el="main"]');
@@ -31,6 +32,7 @@ export function chart(root, data) {
     const slider = sliderChart(root.querySelector('[data-el="slider"'), data, WIDTH);
     const ctx = canvas.getContext('2d');
     let raf;
+    let prevMax;
 
     css(canvas, {
         width: WIDTH + 'px',
@@ -76,6 +78,23 @@ export function chart(root, data) {
         tip.hide()
     }
 
+    function getMax(yMax) {
+        const step = (yMax - prevMax) / SPEED;
+
+        if (proxy.max < yMax) {
+            proxy.max += step;
+        } else if (proxy.max > yMax) {
+            proxy.max = yMax;
+            prevMax = yMax
+        }
+
+        return proxy.max;
+    }
+
+    function translateX(length, xRatio, left) {
+        return -1 * Math.round((left * length * xRatio) / 100)
+    }
+
     function paint() {
         clear();
         const length = data.columns[0].length;
@@ -84,14 +103,26 @@ export function chart(root, data) {
 
         const columns = data.columns.map(col => {
             const res = col.slice(leftIndex, rightIndex);
-            if (typeof res[0] !=='string') {
+            if (typeof res[0] !== 'string') {
                 res.unshift(col[0]);
             }
 
             return res;
         });
 
-        const [yMin, yMax] = bounderies({columns,types: data.types});
+        const [yMin, yMax] = bounderies({
+            columns,
+            types: data.types
+        });
+
+        if (!prevMax) {
+            prevMax = yMax;
+            proxy.max = yMax;
+        }
+
+        const max = getMax(yMax)
+        const translate = translateX(data.columns[0].length, xRatio, proxy.pos[0])
+
         const yRatio = computeYRatio(VIEW_HEIGHT, yMax, yMin);
         const xRatio = computeXRatio(VIEW_WIDTH, columns[0].length);
         const yData = columns.filter(col => data.types[col[0]] === 'line');
